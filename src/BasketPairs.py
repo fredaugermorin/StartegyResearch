@@ -96,19 +96,22 @@ if __name__ == "__main__":
     myData.loc[myData['Prevision t+1'] < myData['Bot bound'].shift(1),['Signal']] = -1
 
     
-    myData['Unwind'] = 0
+    myData['Hold'] = 1
     
-    myData.loc[myData['Signal'] != myData['Signal'].shift(1),['Unwind']] = 1
+    myData.loc[myData['Signal'] != myData['Signal'].shift(1),['Hold']] = 0
    
-    initCapital = 10000
-    myData['Units'] = initCapital // ((-1*myData['YAHOO/TO_NA - Adjusted Close']  + hr*myData['YAHOO/TO_BMO - Adjusted Close']) * myData['Signal'])
+    initCapital = 100000
+    myData['Units'] = initCapital // np.abs(-1*myData['YAHOO/TO_NA - Adjusted Close']  + hr*myData['YAHOO/TO_BMO - Adjusted Close'])
     myData['Position'] = myData['Units'] * ((-1*myData['YAHOO/TO_NA - Adjusted Close']  + hr*myData['YAHOO/TO_BMO - Adjusted Close']) * myData['Signal'])
-   
-    myData['Cash'] = initCapital + np.cumsum(myData['Position'])
+    myData['PnL'] = myData['Hold'] * (myData['Position'].diff(1))
+    myData['Cash'] = initCapital + np.cumsum(myData['PnL'])
 
-    print(myData.tail(30))
-    plt.plot(myData['Position'])
-    plt.title('Evolution of capital using the trade')    
+    plt.subplot(211)
+    plt.plot(myData['Cash'])
+    plt.title('Evolution of ' +str(initCapital) +' $ allocated to trade')  
+    plt.subplot(212)
+    plt.plot(myData['PnL'])
+    plt.title('Evolution of PnL per trade')    
     plt.show()
         
             
